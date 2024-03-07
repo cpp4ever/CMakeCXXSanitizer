@@ -1,0 +1,46 @@
+name: Windows
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: "${{matrix.platform}}: ${{matrix.language}} sanitizers"
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        language: [C, CXX]
+        platform: [Win32, x64]
+        toolset: [v143]
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+  
+    - name: Install
+      run: |
+        choco install cmake
+        cmake --version
+        cmake -E make_directory ${{runner.workspace}}/build
+
+    - name: Configure
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        cmake -A ${{matrix.platform}} -DLANGUAGE=${{matrix.language}} -T ${{matrix.toolset}} -S "${{github.workspace}}"
+
+    - name: Build
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        cmake --build . --config Debug
+
+    - name: Test
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        ctest --build-config Debug --verbose

@@ -1,0 +1,60 @@
+name: macOS
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: "${{matrix.compiler}}: ${{matrix.language}} sanitizers"
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        compiler: [clang, gcc]
+        language: [C, CXX]
+        include:
+          - compiler: clang
+            cc: clang
+            cxx: clang++
+            packages: llvm@15
+          - compiler: gcc
+            cc: gcc-13
+            cxx: g++-13
+            packages: gcc@13
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+
+    - name: Install
+      run: |
+        brew install ${{matrix.packages}} cmake ninja
+        ${{matrix.cc}} --version
+        ${{matrix.cxx}} --version
+        cmake --version
+        ninja --version
+        cmake -E make_directory ${{runner.workspace}}/build
+
+    - name: Configure
+      env:
+        CC: ${{matrix.cc}}
+        CXX: ${{matrix.cxx}}
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        cmake -DCMAKE_BUILD_TYPE=Debug -DLANGUAGE=${{matrix.language}} -G "Ninja" -S "${{github.workspace}}"
+
+    - name: Build
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        cmake --build . --config Debug
+
+    - name: Test
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        ctest --build-config Debug --verbose

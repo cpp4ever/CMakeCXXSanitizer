@@ -1,0 +1,62 @@
+name: Linux
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: "${{matrix.compiler}}: ${{matrix.language}} sanitizers"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [clang, gcc]
+        language: [C, CXX]
+        include:
+          - compiler: clang
+            cc: clang-15
+            cxx: clang++-15
+            packages: clang-15 libc++-15-dev libc++abi-15-dev
+          - compiler: gcc
+            cc: gcc-12
+            cxx: g++-12
+            packages: g++-12 libstdc++-12-dev
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+
+    - name: Install
+      run: |
+        sudo sysctl vm.mmap_rnd_bits=28
+        sudo apt-get update
+        sudo apt-get install ${{matrix.packages}} cmake ninja-build
+        ${{matrix.cc}} --version
+        ${{matrix.cxx}} --version
+        cmake --version
+        ninja --version
+        cmake -E make_directory ${{runner.workspace}}/build
+
+    - name: Configure
+      env:
+        CC: ${{matrix.cc}}
+        CXX: ${{matrix.cxx}}
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        cmake -DCMAKE_BUILD_TYPE=Debug -DLANGUAGE=${{matrix.language}} -G "Ninja" -S "${{github.workspace}}"
+
+    - name: Build
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        cmake --build . --config Debug
+
+    - name: Test
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        ctest --build-config Debug --verbose
