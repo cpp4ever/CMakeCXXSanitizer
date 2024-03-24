@@ -111,6 +111,7 @@ function(internal_target_sanitizer_default_options IN_LANGUAGE IN_TARGET IN_SANI
       set(RUNTIME_FLAGS "${IN_RUNTIME_FLAGS}")
       configure_file("${IN_FILE_PATH}" "${OUT_FILE_PATH}" @ONLY)
       target_sources(${IN_TARGET} PRIVATE "${OUT_FILE_PATH}")
+      source_group("CMakeSanitizer" FILES ${OUT_FILE_PATH})
    endif()
 endfunction()
 
@@ -125,6 +126,7 @@ function(internal_target_sanitizer_default_suppressions IN_LANGUAGE IN_TARGET IN
       set(RUNTIME_SUPPRESSIONS "${IN_RUNTIME_SUPPRESSIONS}")
       configure_file("${IN_FILE_PATH}" "${OUT_FILE_PATH}" @ONLY)
       target_sources(${IN_TARGET} PRIVATE "${OUT_FILE_PATH}")
+      source_group("CMakeSanitizer" FILES ${OUT_FILE_PATH})
    endif()
 endfunction()
 
