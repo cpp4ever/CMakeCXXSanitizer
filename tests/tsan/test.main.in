@@ -25,18 +25,24 @@
 
 #if (defined(__clang__))
 extern int ignored_race(int initialValue);
+#else
+/// -fsanitize-ignorelist compile option is supported by Clang only
+static int ignored_race(int const initialValue)
+{
+   (void)initialValue;
+   return 0;
+}
 #endif
+
 extern int instrumented_race(int initialValue);
+
 extern int suppressed_race(int initialValue);
+
 extern int uninstrumented_race(int initialValue);
 
 int main(int const argc, char **argv)
 {
-#if (defined(__clang__))
    int ignoredResult = ignored_race(argc);
-#else
-   int ignoredResult = 0;
-#endif
    int suppressedResult = suppressed_race(argc);
    int uninstrumentedResult = uninstrumented_race(argc);
    int instrumentedResult = instrumented_race(argc);

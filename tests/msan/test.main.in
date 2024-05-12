@@ -23,19 +23,15 @@
    SOFTWARE.
 */
 
-#if (defined(__clang__))
 extern int ignored_use_of_uninitialized_value(int index);
-#endif
+
 extern int instrumented_use_of_uninitialized_value(int index);
+
 extern int uninstrumented_use_of_uninitialized_value(int index);
 
 int main(int const argc, char **argv)
 {
-#if (defined(__clang__))
    int ignoredResult = ignored_use_of_uninitialized_value(argc);
-#else
-   int ignoredResult = 0;
-#endif
    int uninstrumentedResult = uninstrumented_use_of_uninitialized_value(argc);
    int instrumentedResult = instrumented_use_of_uninitialized_value(argc);
    return ignoredResult + uninstrumentedResult + instrumentedResult;

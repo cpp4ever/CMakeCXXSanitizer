@@ -54,7 +54,7 @@ if(${LANGUAGE}_UBSAN_AVAILABLE)
       FLAGS # Adds __ubsan_default_options function instead of UBSAN_OPTIONS env variable
       # Common flags: https://github.com/llvm/llvm-project/blob/main/compiler-rt/lib/sanitizer_common/sanitizer_flags.inc
          print_suppressions=true
-         exitcode=1
+         exitcode=0
          abort_on_error=false
       # UndefinedBehaviorSanitizer flags: https://github.com/llvm/llvm-project/blob/main/compiler-rt/lib/ubsan/ubsan_flags.inc
          halt_on_error=true
@@ -68,5 +68,24 @@ if(${LANGUAGE}_UBSAN_AVAILABLE)
    add_library(ubsan_uninstrumented_test SHARED "${CMAKE_CURRENT_BINARY_DIR}/src/uninstrumented.test${LANGUAGE_FILE_EXTENSION}")
    target_link_libraries(ubsan_test PRIVATE ubsan_uninstrumented_test)
    add_test(NAME UndefinedBehaviorSanitizer COMMAND $<TARGET_FILE:ubsan_test>)
-   set_tests_properties(UndefinedBehaviorSanitizer PROPERTIES WILL_FAIL TRUE)
+   set(
+      UBSAN_TEST_FAIL_REGEX
+      "ignored\\.test"
+      "suppressed\\.test"
+      "uninstrumented\\.test"
+      "in ignored_integer_overflow"
+      "in suppressed_integer_overflow"
+      "in uninstrumented_integer_overflow"
+   )
+   set(
+      UBSAN_TEST_PASS_REGEX
+      "instrumented\\.test\\${LANGUAGE_FILE_EXTENSION}.*\\: runtime error\\: signed integer overflow\\: 1 \\+ 2147483647 cannot be represented in type 'int'"
+      "in instrumented_integer_overflow.* .*instrumented\\.test\\${LANGUAGE_FILE_EXTENSION}"
+   )
+   set_tests_properties(
+      UndefinedBehaviorSanitizer
+      PROPERTIES
+         FAIL_REGULAR_EXPRESSION "${UBSAN_TEST_FAIL_REGEX}"
+         PASS_REGULAR_EXPRESSION "${UBSAN_TEST_PASS_REGEX}"
+   )
 endif()

@@ -23,9 +23,6 @@
    SOFTWARE.
 */
 
-#if (defined(_WIN32))
-__declspec(dllexport)
-#endif
 int ignored_integer_overflow(int value)
 {
    value += 0x7fffffff;

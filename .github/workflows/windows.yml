@@ -2,22 +2,28 @@ name: Windows
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 permissions:
   contents: read
 
 jobs:
   build:
-    name: "${{matrix.platform}}: ${{matrix.language}} sanitizers"
-    runs-on: windows-latest
+    name: "${{matrix.os}} ${{matrix.platform}}: ${{matrix.language}} sanitizers"
+    runs-on: ${{matrix.os}}
     strategy:
+      fail-fast: false
       matrix:
         language: [C, CXX]
+        os: [windows-2019, windows-2022]
         platform: [Win32, x64]
-        toolset: [v143]
+        include:
+          - os: windows-2019
+            toolset: v142
+          - os: windows-2022
+            toolset: v143
 
     steps:
     - uses: actions/checkout@v4

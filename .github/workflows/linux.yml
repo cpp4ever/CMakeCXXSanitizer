@@ -2,27 +2,31 @@ name: Linux
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 permissions:
   contents: read
 
 jobs:
   build:
-    name: "${{matrix.compiler}}: ${{matrix.language}} sanitizers"
-    runs-on: ubuntu-latest
+    name: "${{matrix.os}} ${{matrix.compiler}}: ${{matrix.language}} sanitizers"
+    runs-on: ${{matrix.os}}
     strategy:
+      fail-fast: false
       matrix:
         compiler: [clang, gcc]
         language: [C, CXX]
+        os: [ubuntu-22.04]
         include:
-          - compiler: clang
+          - os: ubuntu-22.04
+            compiler: clang
             cc: clang-15
             cxx: clang++-15
             packages: clang-15 libc++-15-dev libc++abi-15-dev
-          - compiler: gcc
+          - os: ubuntu-22.04
+            compiler: gcc
             cc: gcc-12
             cxx: g++-12
             packages: g++-12 libstdc++-12-dev
@@ -59,4 +63,4 @@ jobs:
     - name: Test
       working-directory: ${{runner.workspace}}/build
       run: |
-        ctest --build-config Debug --verbose
+        ctest --build-config Debug --repeat until-pass:10 --verbose

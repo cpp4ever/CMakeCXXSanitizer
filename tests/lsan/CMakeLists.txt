@@ -41,18 +41,36 @@ if(${LANGUAGE}_LSAN_AVAILABLE)
       # Common flags: https://github.com/llvm/llvm-project/blob/main/compiler-rt/lib/sanitizer_common/sanitizer_flags.inc
          detect_leaks=true
          print_suppressions=true
-         exitcode=1
+         exitcode=0
          abort_on_error=false
       # LeakSanitizer flags: https://github.com/llvm/llvm-project/blob/main/compiler-rt/lib/lsan/lsan_flags.inc
          use_unaligned=false
 
       SUPPRESSIONS # Runtime suppressions (adds __lsan_default_suppressions function)
          leak:suppressed.test${LANGUAGE_FILE_EXTENSION} # file
-         leak:suppressed_leak # function
          leak:lsan_uninstrumented_test # library
    )
    add_library(lsan_uninstrumented_test SHARED "${CMAKE_CURRENT_BINARY_DIR}/src/uninstrumented.test${LANGUAGE_FILE_EXTENSION}")
    target_link_libraries(lsan_test PRIVATE lsan_uninstrumented_test)
    add_test(NAME LeakSanitizer COMMAND $<TARGET_FILE:lsan_test>)
-   set_tests_properties(LeakSanitizer PROPERTIES WILL_FAIL TRUE)
+   set(
+      LSAN_TEST_FAIL_REGEX
+      "uninstrumented\\.test"
+      "in suppressed_leak"
+      "in uninstrumented_leak"
+   )
+   set(
+      LSAN_TEST_PASS_REGEX
+      "ERROR\\: LeakSanitizer\\: detected memory leaks"
+      "in instrumented_leak.* .*instrumented\\.test\\${LANGUAGE_FILE_EXTENSION}"
+      "lsan_uninstrumented_test"
+      "suppressed\\.test\\${LANGUAGE_FILE_EXTENSION}"
+      "SUMMARY\\: LeakSanitizer\\: 2 byte\\(s\\) leaked in 1 allocation\\(s\\)"
+   )
+   set_tests_properties(
+      LeakSanitizer
+      PROPERTIES
+         FAIL_REGULAR_EXPRESSION "${LSAN_TEST_FAIL_REGEX}"
+         PASS_REGULAR_EXPRESSION "${LSAN_TEST_PASS_REGEX}"
+   )
 endif()

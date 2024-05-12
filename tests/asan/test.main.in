@@ -25,27 +25,34 @@
 
 #if (defined(__clang__))
 extern int ignored_use_after_free(int index);
+#else
+/// -fsanitize-ignorelist compile option is supported by Clang only
+static int ignored_use_after_free(int const index)
+{
+   (void)index;
+   return 0;
+}
 #endif
-#if (defined(_WIN32))
-/// Seems MSVC does not support suppressions
+
+#if (defined(__APPLE__) && !defined(__cplusplus) && !defined(__clang__) || defined(_WIN32))
+/// __asan_default_suppressions is not called if compiled with GCC C compiler for macOS
+/// __asan_default_suppressions is not called if compiled with MSVC
+static int suppressed_heap_buffer_overflow()
+{
+   return 0;
+}
 #else
 extern int suppressed_heap_buffer_overflow();
 #endif
+
 extern int instrumented_use_after_free(int index);
+
 extern int uninstrumented_use_after_free(int index);
 
 int main(int const argc, char **argv)
 {
-#if (defined(__clang__))
    int ignoredResult = ignored_use_after_free(argc);
-#else
-   int ignoredResult = 0;
-#endif
-#if (defined(_WIN32))
-   int suppressedResult = 0;
-#else
    int suppressedResult = suppressed_heap_buffer_overflow();
-#endif
    int uninstrumentedResult = uninstrumented_use_after_free(argc);
    int instrumentedResult = instrumented_use_after_free(argc);
    return ignoredResult + suppressedResult + uninstrumentedResult + instrumentedResult;

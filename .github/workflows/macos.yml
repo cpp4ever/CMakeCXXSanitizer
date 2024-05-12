@@ -2,30 +2,43 @@ name: macOS
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 permissions:
   contents: read
 
 jobs:
   build:
-    name: "${{matrix.compiler}}: ${{matrix.language}} sanitizers"
-    runs-on: macos-latest
+    name: "${{matrix.os}} ${{matrix.compiler}}: ${{matrix.language}} sanitizers"
+    runs-on: ${{matrix.os}}
     strategy:
+      fail-fast: false
       matrix:
         compiler: [clang, gcc]
         language: [C, CXX]
+        os: [macos-12, macos-13, macos-14]
         include:
           - compiler: clang
             cc: clang
             cxx: clang++
             packages: llvm@15
-          - compiler: gcc
+          - os: macos-12
+            compiler: gcc
+            cc: gcc-11
+            cxx: g++-11
+            packages:
+          - os: macos-13
+            compiler: gcc
+            cc: gcc-12
+            cxx: g++-12
+            packages:
+          - os: macos-14
+            compiler: gcc
             cc: gcc-13
             cxx: g++-13
-            packages: gcc@13
+            packages:
 
     steps:
     - uses: actions/checkout@v4
@@ -57,4 +70,4 @@ jobs:
     - name: Test
       working-directory: ${{runner.workspace}}/build
       run: |
-        ctest --build-config Debug --verbose
+        ctest --build-config Debug --repeat until-pass:10 --verbose

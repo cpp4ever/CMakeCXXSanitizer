@@ -54,7 +54,7 @@ if(${LANGUAGE}_TSAN_AVAILABLE)
       FLAGS # Adds __tsan_default_options function instead of TSAN_OPTIONS env variable
       # Common flags: https://github.com/llvm/llvm-project/blob/main/compiler-rt/lib/sanitizer_common/sanitizer_flags.inc
          print_suppressions=true
-         exitcode=1
+         exitcode=0
          abort_on_error=false
       # ThreadSanitizer flags: https://github.com/llvm/llvm-project/blob/main/compiler-rt/lib/tsan/rtl/tsan_flags.inc
          suppress_equal_stacks=false
@@ -69,5 +69,23 @@ if(${LANGUAGE}_TSAN_AVAILABLE)
    add_library(tsan_uninstrumented_test SHARED "${CMAKE_CURRENT_BINARY_DIR}/src/uninstrumented.test${LANGUAGE_FILE_EXTENSION}")
    target_link_libraries(tsan_test PRIVATE tsan_uninstrumented_test)
    add_test(NAME ThreadSanitizer COMMAND $<TARGET_FILE:tsan_test>)
-   set_tests_properties(ThreadSanitizer PROPERTIES WILL_FAIL TRUE)
+   set(
+      TSAN_TEST_FAIL_REGEX
+      "ignored\\.test"
+      "suppressed\\.test"
+      "uninstrumented\\.test"
+      "in ignored_race"
+      "in suppressed_race"
+      "in uninstrumented_race"
+   )
+   set(
+      TSAN_TEST_PASS_REGEX
+      "SUMMARY\\: ThreadSanitizer\\: data race .*instrumented\\.test\\${LANGUAGE_FILE_EXTENSION}.* in instrumented_race"
+   )
+   set_tests_properties(
+      ThreadSanitizer
+      PROPERTIES
+         FAIL_REGULAR_EXPRESSION "${TSAN_TEST_FAIL_REGEX}"
+         PASS_REGULAR_EXPRESSION "${TSAN_TEST_PASS_REGEX}"
+   )
 endif()

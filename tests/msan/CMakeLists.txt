@@ -49,7 +49,7 @@ if(${LANGUAGE}_MSAN_AVAILABLE)
 
       FLAGS # Adds __msan_default_options function instead of MSAN_OPTIONS env variable
       # Common flags: https://github.com/llvm/llvm-project/blob/main/compiler-rt/lib/sanitizer_common/sanitizer_flags.inc
-         exitcode=1
+         exitcode=0
          abort_on_error=false
       # MemorySanitizer flags: https://github.com/llvm/llvm-project/blob/main/compiler-rt/lib/msan/msan_flags.inc
          origin_history_size=0
@@ -58,5 +58,21 @@ if(${LANGUAGE}_MSAN_AVAILABLE)
    add_library(msan_uninstrumented_test SHARED "${CMAKE_CURRENT_BINARY_DIR}/src/uninstrumented.test${LANGUAGE_FILE_EXTENSION}")
    target_link_libraries(msan_test PRIVATE msan_uninstrumented_test)
    add_test(NAME MemorySanitizer COMMAND $<TARGET_FILE:msan_test>)
-   set_tests_properties(MemorySanitizer PROPERTIES WILL_FAIL TRUE)
+   set(
+      MSAN_TEST_FAIL_REGEX
+      "ignored\\.test"
+      "uninstrumented\\.test"
+      "ignored_use_of_uninitialized_value"
+      "uninstrumented_use_of_uninitialized_value"
+   )
+   set(
+      MSAN_TEST_PASS_REGEX
+      "SUMMARY\\: MemorySanitizer\\: use-of-uninitialized-value .*instrumented\\.test\\${LANGUAGE_FILE_EXTENSION}.* in instrumented_use_of_uninitialized_value"
+   )
+   set_tests_properties(
+      MemorySanitizer
+      PROPERTIES
+         FAIL_REGULAR_EXPRESSION "${MSAN_TEST_FAIL_REGEX}"
+         PASS_REGULAR_EXPRESSION "${MSAN_TEST_PASS_REGEX}"
+   )
 endif()

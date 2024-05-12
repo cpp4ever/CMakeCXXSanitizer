@@ -25,9 +25,6 @@
 
 #include <stdlib.h> /// for malloc
 
-#if (defined(_WIN32))
-__declspec(dllexport)
-#endif
 void *suppressed_leak(int const size)
 {
    return malloc(size + 1);

@@ -34,9 +34,6 @@ static void *uninstrumented_thread_handler(void *userData)
    return userData;
 }
 
-#if (defined(_WIN32))
-__declspec(dllexport)
-#endif
 int uninstrumented_race(int const initialValue)
 {
    pthread_t uninstrumentedThread;
