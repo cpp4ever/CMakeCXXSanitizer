@@ -28,6 +28,10 @@
 
 #if (defined(_WIN32))
 __declspec(dllexport)
+#else
+__attribute__((noinline))
+__attribute__((used))
+__attribute__((visibility("default")))
 #endif
 int suppressed_heap_buffer_overflow()
 {

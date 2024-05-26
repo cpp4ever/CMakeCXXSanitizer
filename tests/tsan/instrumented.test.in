@@ -34,6 +34,9 @@ static void *instrumented_thread_handler(void *userData)
    return userData;
 }
 
+__attribute__((noinline))
+__attribute__((used))
+__attribute__((visibility("default")))
 int instrumented_race(int const initialValue)
 {
    pthread_t instrumentedThread;

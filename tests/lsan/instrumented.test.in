@@ -25,6 +25,9 @@
 
 #include <stdlib.h> /// for malloc
 
+__attribute__((noinline))
+__attribute__((used))
+__attribute__((visibility("default")))
 void *instrumented_leak(int const size)
 {
    return malloc(size + 1);

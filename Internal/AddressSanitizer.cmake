@@ -177,8 +177,21 @@ endfunction()
 
 function(internal_target_asan_options IN_LANGUAGE IN_TARGET IN_COMPILETIME_IGNORELIST)
    if(CMAKE_${IN_LANGUAGE}_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
-      target_compile_options(${IN_TARGET} BEFORE PRIVATE $<$<COMPILE_LANGUAGE:C,CXX>:/fsanitize=address /Oy- /Zi>)
-      target_link_options(${IN_TARGET} BEFORE PRIVATE $<$<COMPILE_LANGUAGE:C,CXX>:/DEBUG /INCREMENTAL:NO>)
+      set(ASAN_COMPILE_OPTIONS /fsanitize=address /Oy- /Zi)
+      set(ASAN_LINK_OPTIONS /INCREMENTAL:NO)
+      if("${MSVC_TOOLSET_VERSION}" STREQUAL "142")
+         # Works fine for Debug build only. Needs investigation why Release binary fails to start.
+         set(ASAN_COMPILE_OPTIONS $<$<AND:$<COMPILE_LANGUAGE:C,CXX>,$<CONFIG:Debug>>:${ASAN_COMPILE_OPTIONS}>)
+         set(ASAN_LINK_OPTIONS $<$<AND:$<COMPILE_LANGUAGE:C,CXX>,$<CONFIG:Debug>>:${ASAN_LINK_OPTIONS}>)
+      else()
+         set(ASAN_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:C,CXX>:${ASAN_COMPILE_OPTIONS}>)
+         set(ASAN_LINK_OPTIONS $<$<COMPILE_LANGUAGE:C,CXX>:/DEBUG ${ASAN_LINK_OPTIONS}>)
+         set_target_properties(
+            ${IN_TARGET}
+            PROPERTIES
+               MSVC_DEBUG_INFORMATION_FORMAT "$<$<COMPILE_LANGUAGE:C,CXX>:ProgramDatabase>"
+         )
+      endif()
    else()
       set(
          ASAN_COMPILE_OPTIONS
@@ -197,9 +210,11 @@ function(internal_target_asan_options IN_LANGUAGE IN_TARGET IN_COMPILETIME_IGNOR
       if(${IN_LANGUAGE}_ASAN_USE_AFTER_RETURN_SUPPORTED)
          list(APPEND ASAN_COMPILE_OPTIONS -fsanitize-address-use-after-return=always)
       endif()
-      target_compile_options(${IN_TARGET} BEFORE PRIVATE $<$<COMPILE_LANGUAGE:C,CXX>:${ASAN_COMPILE_OPTIONS}>)
-      target_link_options(${IN_TARGET} BEFORE PRIVATE $<$<COMPILE_LANGUAGE:C,CXX>:${ASAN_COMPILE_OPTIONS}>)
+      set(ASAN_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:C,CXX>:${ASAN_COMPILE_OPTIONS}>)
+      set(ASAN_LINK_OPTIONS $<$<COMPILE_LANGUAGE:C,CXX>:${ASAN_COMPILE_OPTIONS}>)
    endif()
+   target_compile_options(${IN_TARGET} BEFORE PRIVATE ${ASAN_COMPILE_OPTIONS})
+   target_link_options(${IN_TARGET} BEFORE PRIVATE ${ASAN_LINK_OPTIONS})
    internal_target_sanitizer_ignorelist(${IN_LANGUAGE} ${IN_TARGET} "${IN_COMPILETIME_IGNORELIST}")
 endfunction()
 
