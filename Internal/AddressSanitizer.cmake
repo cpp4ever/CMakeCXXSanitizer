@@ -178,7 +178,7 @@ endfunction()
 function(internal_target_asan_options IN_LANGUAGE IN_TARGET IN_COMPILETIME_IGNORELIST)
    if(CMAKE_${IN_LANGUAGE}_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
       target_compile_options(${IN_TARGET} BEFORE PRIVATE $<$<COMPILE_LANGUAGE:C,CXX>:/fsanitize=address /Oy- /Zi>)
-      target_link_options(${IN_TARGET} BEFORE PRIVATE $<$<COMPILE_LANGUAGE:C,CXX>:/INCREMENTAL:NO>)
+      target_link_options(${IN_TARGET} BEFORE PRIVATE $<$<COMPILE_LANGUAGE:C,CXX>:/DEBUG /INCREMENTAL:NO>)
    else()
       set(
          ASAN_COMPILE_OPTIONS
