@@ -145,10 +145,10 @@ function(internal_target_msan_options IN_LANGUAGE IN_TARGET IN_COMPILETIME_IGNOR
       MSAN_COMPILER_OPTIONS
       -fno-omit-frame-pointer
       -fno-optimize-sibling-calls
-      -fPIC
       -fsanitize=memory
       -g
    )
+   set_target_properties(${IN_TARGET} PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
    target_compile_options(${IN_TARGET} BEFORE PRIVATE $<$<COMPILE_LANGUAGE:C,CXX>:${MSAN_COMPILER_OPTIONS}>)
    target_link_options(${IN_TARGET} BEFORE PRIVATE $<$<COMPILE_LANGUAGE:C,CXX>:${MSAN_COMPILER_OPTIONS}>)
    if(IN_LANGUAGE STREQUAL "CXX")
