@@ -69,7 +69,7 @@ ExternalProject_Add(
    GIT_TAG llvmorg-${CMAKE_CXX_COMPILER_VERSION}
    # Configure Step Options
    CMAKE_ARGS
-      -DLLVM_ENABLE_RUNTIMES='libcxx|libcxxabi'
+      -DLLVM_ENABLE_RUNTIMES='libcxx|libcxxabi|libunwind'
       -DLLVM_USE_SANITIZER:STRING=MemoryWithOrigins # Enable MSan
       -Wno-dev
       ${LLVM_EXTRA_ARGUMENTS}
