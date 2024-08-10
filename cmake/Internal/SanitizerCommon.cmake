@@ -23,6 +23,8 @@
    SOFTWARE.
 ]]
 
+include(CMakeTargetDependencies)
+
 function(internal_check_compiler_flags IN_LANGUAGE IN_FLAGS OUT_RESULT)
    if(IN_LANGUAGE STREQUAL "C")
       include(CheckCCompilerFlag)
@@ -78,26 +80,18 @@ function(internal_sanitizer_settings OUT_COMPILETIME_IGNORELIST OUT_RUNTIME_FLAG
    set(${OUT_RUNTIME_SUPPRESSIONS} ${RUNTIME_SUPPRESSIONS} PARENT_SCOPE)
 endfunction()
 
+set(SKIP_TARGET_TYPES INTERFACE_LIBRARY UTILITY)
+
 function(internal_target_link_libraries_recursive IN_TARGET OUT_LINK_LIBRARIES)
+   get_target_link_libraries_recursive(${IN_TARGET} TARGET_LINK_LIBRARIES)
    set(LINK_LIBRARIES )
-   get_target_property(TARGET_LINK_LIBRARIES ${IN_TARGET} LINK_LIBRARIES)
-   if(NOT TARGET_LINK_LIBRARIES STREQUAL TARGET_LINK_LIBRARIES-NOTFOUND)
-      foreach(SUBTARGET IN LISTS TARGET_LINK_LIBRARIES)
-         if(TARGET ${SUBTARGET})
-            get_target_property(ALIASED_SUBTARGET ${SUBTARGET} ALIASED_TARGET)
-            if(NOT ALIASED_SUBTARGET STREQUAL ALIASED_SUBTARGET-NOTFOUND)
-               set(SUBTARGET ${ALIASED_SUBTARGET})
-            endif()
-            get_target_property(SUBTARGET_TYPE ${SUBTARGET} TYPE)
-            get_target_property(SUBTARGET_IMPORTED ${SUBTARGET} IMPORTED)
-            if(NOT SUBTARGET_TYPE STREQUAL "INTERFACE_LIBRARY" AND NOT SUBTARGET_IMPORTED)
-               list(APPEND LINK_LIBRARIES ${SUBTARGET})
-            endif()
-            internal_target_link_libraries_recursive(${SUBTARGET} SUBTARGET_LINK_LIBRARIES)
-            list(APPEND LINK_LIBRARIES ${SUBTARGET_LINK_LIBRARIES})
-         endif()
-      endforeach()
-   endif()
+   foreach(SUBTARGET IN LISTS TARGET_LINK_LIBRARIES)
+      get_target_property(SUBTARGET_TYPE ${SUBTARGET} TYPE)
+      get_target_property(SUBTARGET_IMPORTED ${SUBTARGET} IMPORTED)
+      if(NOT SUBTARGET_TYPE IN_LIST SKIP_TARGET_TYPES AND NOT SUBTARGET_IMPORTED)
+         list(APPEND LINK_LIBRARIES ${SUBTARGET})
+      endif()
+   endforeach()
    set(${OUT_LINK_LIBRARIES} ${LINK_LIBRARIES} PARENT_SCOPE)
 endfunction()
 
