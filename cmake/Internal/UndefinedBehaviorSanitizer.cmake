@@ -24,6 +24,7 @@
 ]]
 
 include("${CMAKE_CURRENT_LIST_DIR}/SanitizerCommon.cmake")
+include(CMakeTargetCompiler)
 
 set(
    CMAKE_UNDEFINED_BEHAVIOR_SANITIZER_KNOWN_FLAGS
@@ -127,7 +128,7 @@ set(
 function(internal_check_ubsan IN_LANGUAGE OUT_AVAILABLE)
    # https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html#supported-platforms
    if(NOT CMAKE_${IN_LANGUAGE}_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
-      internal_check_compiler_flags(${IN_LANGUAGE} -fsanitize=undefined ${OUT_AVAILABLE})
+      check_compiler_flags(${IN_LANGUAGE} -fsanitize=undefined ${OUT_AVAILABLE})
    endif()
 endfunction()
 
@@ -138,7 +139,7 @@ function(internal_target_ubsan_options IN_LANGUAGE IN_TARGET IN_COMPILETIME_IGNO
       -fsanitize=undefined
       -g
    )
-   internal_check_compiler_flags(
+   check_compiler_flags(
       ${IN_LANGUAGE}
       "-fsanitize=undefined -fsanitize=float-divide-by-zero"
       ${IN_LANGUAGE}_UBSAN_FLOAT_DIVIDE_BY_ZERO_SUPPORTED
@@ -146,7 +147,7 @@ function(internal_target_ubsan_options IN_LANGUAGE IN_TARGET IN_COMPILETIME_IGNO
    if(${IN_LANGUAGE}_UBSAN_FLOAT_DIVIDE_BY_ZERO_SUPPORTED)
       list(APPEND UBSAN_COMPILE_OPTIONS -fsanitize=float-divide-by-zero)
    endif()
-   internal_check_compiler_flags(
+   check_compiler_flags(
       ${IN_LANGUAGE}
       "-fsanitize=undefined -fsanitize=integer"
       ${IN_LANGUAGE}_UBSAN_INTEGER_SUPPORTED
@@ -161,9 +162,9 @@ endfunction()
 
 function(internal_target_ubsan IN_LANGUAGE IN_TARGET)
    internal_sanitizer_settings(COMPILETIME_IGNORELIST RUNTIME_FLAGS RUNTIME_SUPPRESSIONS ${ARGN})
-   internal_target_link_libraries_recursive(${IN_TARGET} TARGET_LINK_LIBRARIES)
-   foreach(SUBTARGET IN LISTS TARGET_LINK_LIBRARIES)
-      internal_target_ubsan_options(${IN_LANGUAGE} ${SUBTARGET} "")
+   internal_target_link_dependencies_recursive(${IN_TARGET} TARGET_LINK_DEPENDENCIES)
+   foreach(TARGET_LINK_DEPENDENCY IN LISTS TARGET_LINK_DEPENDENCIES)
+      internal_target_ubsan_options(${IN_LANGUAGE} ${TARGET_LINK_DEPENDENCY} "")
    endforeach()
    internal_target_ubsan_options(${IN_LANGUAGE} ${IN_TARGET} "${COMPILETIME_IGNORELIST}")
    string(LENGTH "${RUNTIME_SUPPRESSIONS}" RUNTIME_SUPPRESSIONS_LENGTH)

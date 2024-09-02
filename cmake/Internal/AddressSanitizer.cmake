@@ -24,6 +24,7 @@
 ]]
 
 include("${CMAKE_CURRENT_LIST_DIR}/SanitizerCommon.cmake")
+include(CMakeTargetCompiler)
 
 set(
    CMAKE_ADDRESS_SANITIZER_KNOWN_FLAGS
@@ -168,10 +169,10 @@ function(internal_check_asan IN_LANGUAGE OUT_AVAILABLE)
    # https://clang.llvm.org/docs/AddressSanitizer.html#supported-platforms
    if(CMAKE_${IN_LANGUAGE}_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
       if(CMAKE_${IN_LANGUAGE}_COMPILER_ID STREQUAL "MSVC")
-         internal_check_compiler_flags(${IN_LANGUAGE} /fsanitize=address ${OUT_AVAILABLE})
+         check_compiler_flags(${IN_LANGUAGE} /fsanitize=address ${OUT_AVAILABLE})
       endif()
    else()
-      internal_check_compiler_flags(${IN_LANGUAGE} -fsanitize=address ${OUT_AVAILABLE})
+      check_compiler_flags(${IN_LANGUAGE} -fsanitize=address ${OUT_AVAILABLE})
    endif()
 endfunction()
 
@@ -202,7 +203,7 @@ function(internal_target_asan_options IN_LANGUAGE IN_TARGET IN_COMPILETIME_IGNOR
          -fsanitize-address-use-after-scope
          -g
       )
-      internal_check_compiler_flags(
+      check_compiler_flags(
          ${IN_LANGUAGE}
          "-fsanitize=address -fsanitize-address-use-after-return=always"
          ${IN_LANGUAGE}_ASAN_USE_AFTER_RETURN_SUPPORTED
@@ -220,9 +221,9 @@ endfunction()
 
 function(internal_target_asan IN_LANGUAGE IN_TARGET)
    internal_sanitizer_settings(COMPILETIME_IGNORELIST RUNTIME_FLAGS RUNTIME_SUPPRESSIONS ${ARGN})
-   internal_target_link_libraries_recursive(${IN_TARGET} TARGET_LINK_LIBRARIES)
-   foreach(SUBTARGET IN LISTS TARGET_LINK_LIBRARIES)
-      internal_target_asan_options(${IN_LANGUAGE} ${SUBTARGET} "")
+   internal_target_link_dependencies_recursive(${IN_TARGET} TARGET_LINK_DEPENDENCIES)
+   foreach(TARGET_LINK_DEPENDENCY IN LISTS TARGET_LINK_DEPENDENCIES)
+      internal_target_asan_options(${IN_LANGUAGE} ${TARGET_LINK_DEPENDENCY} "")
    endforeach()
    internal_target_asan_options(${IN_LANGUAGE} ${IN_TARGET} "${COMPILETIME_IGNORELIST}")
    internal_target_sanitizer_default_options(${IN_LANGUAGE} ${IN_TARGET} "asan" "${RUNTIME_FLAGS}")

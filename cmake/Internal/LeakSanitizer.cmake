@@ -24,6 +24,7 @@
 ]]
 
 include("${CMAKE_CURRENT_LIST_DIR}/SanitizerCommon.cmake")
+include(CMakeTargetCompiler)
 
 set(
    CMAKE_LEAK_SANITIZER_KNOWN_FLAGS
@@ -136,7 +137,7 @@ set(
 function(internal_check_lsan IN_LANGUAGE OUT_AVAILABLE)
    # https://clang.llvm.org/docs/LeakSanitizer.html#supported-platforms
    if(NOT APPLE AND NOT CMAKE_${IN_LANGUAGE}_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
-      internal_check_compiler_flags(${IN_LANGUAGE} -fsanitize=leak ${OUT_AVAILABLE})
+      check_compiler_flags(${IN_LANGUAGE} -fsanitize=leak ${OUT_AVAILABLE})
    endif()
 endfunction()
 
@@ -157,9 +158,9 @@ function(internal_target_lsan IN_LANGUAGE IN_TARGET)
    if(COMPILETIME_IGNORELIST_LENGTH GREATER 0)
       message(WARNING "LeakSanitizer does not support ignorelist")
    endif()
-   internal_target_link_libraries_recursive(${IN_TARGET} TARGET_LINK_LIBRARIES)
-   foreach(SUBTARGET IN LISTS TARGET_LINK_LIBRARIES)
-      internal_target_lsan_options(${IN_LANGUAGE} ${SUBTARGET})
+   internal_target_link_dependencies_recursive(${IN_TARGET} TARGET_LINK_DEPENDENCIES)
+   foreach(TARGET_LINK_DEPENDENCY IN LISTS TARGET_LINK_DEPENDENCIES)
+      internal_target_lsan_options(${IN_LANGUAGE} ${TARGET_LINK_DEPENDENCY})
    endforeach()
    internal_target_lsan_options(${IN_LANGUAGE} ${IN_TARGET})
    internal_target_sanitizer_default_options(${IN_LANGUAGE} ${IN_TARGET} "lsan" "${RUNTIME_FLAGS}")

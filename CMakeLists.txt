@@ -27,7 +27,7 @@ cmake_minimum_required(VERSION 3.20)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
-add_subdirectory(thirdparty/CMakeTargets)
+add_subdirectory(thirdparty/CMakeTargets EXCLUDE_FROM_ALL)
 
 get_filename_component(CURRENT_PROJECT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} REALPATH)
 get_filename_component(ROOT_PROJECT_SOURCE_DIR ${CMAKE_SOURCE_DIR} REALPATH)
